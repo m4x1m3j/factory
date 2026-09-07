@@ -1,0 +1,15 @@
+project:
+  name: {{ project_name }}
+  archetype: {{ archetype_name }}
+  version: 1
+
+engine:
+  verification:
+    tier1:
+      - ruff
+      - mypy
+    tier2:
+      - pytest
+  sandbox:
+    specification: Dockerfile
+    container: .devcontainer/devcontainer.json
