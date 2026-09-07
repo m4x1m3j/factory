@@ -22,3 +22,7 @@ The factory will be agnostic of model, agents, or IDE.
 The factory template can be modified, and the modifications will need to be made in every factory-based project.
 
 Our base tech stack will be Python, github.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code quality standards (Ruff, mypy, pre-commit), and testing guidelines.

@@ -67,4 +67,3 @@ Project-defined environment configuration (such as a Dockerfile or devcontainer 
 
 ### Sandbox Manager
 Subsystem within Factory Core controlling the lifecycle, concurrency throttles, resource limits, and cleanup of ephemeral Execution Sandboxes on the host machine.
-

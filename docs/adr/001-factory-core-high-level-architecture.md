@@ -24,7 +24,7 @@ flowchart TB
         TELEMETRY["Production Telemetry\n• Sentry / Metrics\n• Anomaly alerts"]
         SIG_QUEUE[("Unified Signal Queue\n(SQLite Persistence)")]
         TRIAGE["Triage Agent\n• Deduplication & Scoring\n• Backlog Prioritization"]
-        
+
         CLI --> SIG_QUEUE
         WEBHOOKS --> SIG_QUEUE
         TELEMETRY --> SIG_QUEUE
@@ -35,7 +35,7 @@ flowchart TB
         ORCH["Workflow Orchestrator\n(State Machine)"]
         TRIAGE --> ORCH
         CLI -.->|"Direct Pipeline"| ORCH
-        
+
         subgraph LONGTERM ["Long-Term Development Loop"]
             SLICER["Tracer-Bullet Slicer\n(Milestone Decomposer)"]
             JOURNAL[("Milestone State Journal\n(Durable Checkpoints)")]
@@ -50,7 +50,7 @@ flowchart TB
         CPACK["Context Packager\n• System Guardrails\n• Domain Glossary (CONTEXT.md)\n• Architecture Instructions\n• Task & Active Plan"]
         TBUDGET["Dynamic Token Budgeter\n• Strict Window Allocation\n• Dynamic Code Symbols\n• RTK Output Compression"]
         MEM[("Memory Tiers\nUser / Session / Repo")]
-        
+
         ORCH --> CPACK
         CPACK --> TBUDGET
         MEM <--> CPACK
@@ -61,7 +61,7 @@ flowchart TB
         COPILOT["Stage 0: GitHub Copilot Agent\n(Existing Auth / Skills)"]
         LITELLM["Headless LLM Driver\n(OpenAI / Anthropic / Local)"]
         EXT_CLI["External Agent CLIs\n(Claude Code / OpenHands)"]
-        
+
         TBUDGET --> ADAPT_IF
         ADAPT_IF --> COPILOT
         ADAPT_IF --> LITELLM
@@ -70,7 +70,7 @@ flowchart TB
 
     subgraph SANDBOX_EXEC ["5. Execution Sandboxes & Tools"]
         SBOX_MGR["Sandbox Manager\n• Concurrency Throttling\n• Image Building & Cache\n• Ephemeral Container Lifecycle"]
-        
+
         subgraph CONTAINER ["Docker / Podman Sandbox Container"]
             WORKTREE["Isolated Git Worktree\n(.factory/worktrees/<task>)"]
             TOOLS["Agent Tools\n• File Read / Write / Replace\n• Bash Runner (rtk-prefixed)\n• Grep / Glob Search"]
@@ -78,7 +78,7 @@ flowchart TB
             WORKTREE <--> TOOLS
             TOOLS <--> MCP
         end
-        
+
         SBOX_MGR --> CONTAINER
         ADAPT_IF --> CONTAINER
     end
@@ -88,17 +88,17 @@ flowchart TB
         TIER2["Tier 2: Post-Generation Verification\n(Full tests, pytest, mutation, security)"]
         CIRCUIT["Circuit Breaker / Tripwire\n(Max 3 retries -> Rollback to Green)"]
         GATE{"Release Gate\n(Risk Policy Evaluation)"}
-        
+
         TOOLS -->|"File Edit"| TIER1
         TIER1 -->|"Pass"| TOOLS
         TIER1 -->|"Fail"| CIRCUIT
         CIRCUIT -->|"Retry Prompt"| ADAPT_IF
         CIRCUIT -->|"Exceeded"| RECOVERY
-        
+
         CONTAINER -->|"Task Completion"| TIER2
         TIER2 -->|"Green"| GATE
         TIER2 -->|"Red"| CIRCUIT
-        
+
         GATE -->|"Low Risk"| AUTO_REL["Autonomous Git Merge & Release"]
         GATE -->|"High Risk"| HUMAN_SIGN["Hold for Human Approval"]
     end
