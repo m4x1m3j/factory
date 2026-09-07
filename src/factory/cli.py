@@ -21,6 +21,12 @@ def init_project(
     archetype: str = typer.Option(
         ..., "--archetype", "-a", help="Project archetype to scaffold."
     ),
+    directory: Path | None = typer.Option(
+        None,
+        "--directory",
+        "-d",
+        help="Parent directory in which to create the target project.",
+    ),
 ) -> None:
     """Initialize target project from predefined archetype."""
 
@@ -28,7 +34,7 @@ def init_project(
         project_dir = ProjectBootstrapper().initialize(
             name=name,
             archetype=archetype,
-            destination=Path.cwd(),
+            destination=directory if directory is not None else Path.cwd(),
         )
     except BootstrapError as error:
         typer.echo(f"Error: {error}", err=True)

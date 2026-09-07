@@ -42,3 +42,33 @@ def test_should_report_error_when_cli_archetype_is_unknown(
     # Then command fails with available archetype guidance
     assert result.exit_code == 1
     assert "Unknown archetype" in result.output
+
+
+def test_should_initialize_project_in_requested_directory(
+    tmp_path: Path, monkeypatch
+) -> None:
+    # Given a working directory different from the requested destination
+    working_dir = tmp_path / "working"
+    destination = tmp_path / "projects"
+    working_dir.mkdir()
+    monkeypatch.chdir(working_dir)
+
+    # When the project init command receives a directory option
+    result = runner.invoke(
+        app,
+        [
+            "project",
+            "init",
+            "directory-demo",
+            "--archetype",
+            "python",
+            "--directory",
+            str(destination),
+        ],
+        catch_exceptions=False,
+    )
+
+    # Then the project is created below the requested directory
+    assert result.exit_code == 0
+    assert (destination / "directory-demo").is_dir()
+    assert not (working_dir / "directory-demo").exists()
