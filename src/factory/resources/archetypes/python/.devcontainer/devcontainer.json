@@ -1,0 +1,13 @@
+{
+  "name": "{{ project_name }}",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": ".."
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["charliermarsh.ruff"]
+    }
+  },
+  "postCreateCommand": "uv sync --dev"
+}
