@@ -47,8 +47,20 @@ Pluggable execution bridge allowing a specific stage or standalone task to run e
 ### Shared Agent Assets
 Common, version-controlled definitions (AGENTS.md, MCP servers, skills, prompts, and subagents) distributed by Factory Core across target projects.
 
+### Asset Synchronizer
+Subsystem within Factory Core responsible for compiling vendor-neutral Shared Agent Assets into harness-specific configuration structures (e.g. `.github/`, `.opencode/`) and synchronizing updates across target projects.
+
+### Agent Persona
+Declarative specification of an agent profile (identity, system instructions, tool whitelist, associated skills, and model preferences) defined within Shared Agent Assets, compiled to interactive harnesses (e.g. GitHub Copilot, OpenCode) and autonomous pipeline stages.
+
+### Model Capability Tier
+Abstract classification of model capabilities (e.g. reasoning, code_generation, fast_triage) defined on Agent Personas and mapped to harness-specific models via project configuration.
+
 ### Context & Harness Engine
 Subsystem packaging codebase knowledge, token-budgeted memory, project instructions, and execution boundaries injected into an agent before and during execution.
+
+### Harness Hook
+Event-driven interceptor executing before or after an agent tool call within an interactive harness (e.g. PreToolUse command rewriting, PostToolUse immediate code quality checks).
 
 ### Verification Hooks
 Automated deterministic checks (linters, static analysis, type checking, mutation testing) executed inside sandboxes to evaluate agent output.

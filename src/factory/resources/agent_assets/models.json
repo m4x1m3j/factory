@@ -1,0 +1,16 @@
+{
+  "tiers": {
+    "reasoning": {
+      "description": "Deep analysis, architecture, and security evaluation.",
+      "default": "reasoning"
+    },
+    "code_generation": {
+      "description": "Feature implementation, refactoring, and test authoring.",
+      "default": "code_generation"
+    },
+    "fast_triage": {
+      "description": "Fast classification, routing, and status inspection.",
+      "default": "fast_triage"
+    }
+  }
+}

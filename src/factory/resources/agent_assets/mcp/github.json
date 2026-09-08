@@ -1,0 +1,5 @@
+{
+  "name": "github",
+  "package": "@modelcontextprotocol/server-github",
+  "token_env": "GITHUB_TOKEN"
+}
