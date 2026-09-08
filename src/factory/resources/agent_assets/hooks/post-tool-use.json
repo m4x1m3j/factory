@@ -1,7 +1,7 @@
 {
   "event": "PostToolUse",
   "type": "command",
-  "command": "uv run ruff check --fix . && uv run ruff format .",
+  "command": "just fix",
   "cwd": ".",
   "timeout": 30
 }
