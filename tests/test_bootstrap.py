@@ -25,6 +25,10 @@ def test_should_scaffold_python_project_when_archetype_is_supported(
     assert (project_dir / ".devcontainer/devcontainer.json").is_file()
     assert (project_dir / ".github/workflows/ci.yml").is_file()
     assert (project_dir / ".factory/config.yaml").is_file()
+    assert (project_dir / ".github/copilot-instructions.md").is_file()
+    assert (project_dir / ".github/agents/development.agent.md").is_file()
+    assert (project_dir / ".opencode/agents/review.md").is_file()
+    assert (project_dir / "opencode.json").is_file()
 
 
 def test_should_write_project_metadata_when_project_is_initialized(
