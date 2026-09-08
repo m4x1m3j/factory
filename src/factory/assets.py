@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import json
 import re
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from importlib.resources import files
 from importlib.resources.abc import Traversable
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 
 class AssetSyncError(ValueError):
@@ -24,8 +24,202 @@ class AssetSyncResult:
     written_files: tuple[Path, ...]
 
 
+class AssetWriter(Protocol):
+    """Callback used by providers to write generated files."""
+
+    def __call__(
+        self, relative_path: str, content: str, *, executable: bool = False
+    ) -> None: ...
+
+
+@dataclass(frozen=True, slots=True)
+class AssetContext:
+    """Canonical inputs shared with each harness-specific asset provider."""
+
+    skills: tuple[tuple[str, str], ...]
+    global_instructions: str
+    personas: tuple[Mapping[str, Any], ...]
+    models: Mapping[str, str]
+    mcp: Mapping[str, Any]
+    read_json: Callable[[str], dict[str, Any]]
+    opencode_plugin: str
+
+
+class AssetProvider(Protocol):
+    """Harness-specific compiler for canonical shared assets."""
+
+    name: str
+
+    def write_assets(self, context: AssetContext, write: AssetWriter) -> None: ...
+
+
+class GitHubAssetProvider:
+    """Compile canonical assets for GitHub Copilot and VS Code."""
+
+    name = "github"
+
+    def write_assets(self, context: AssetContext, write: AssetWriter) -> None:
+        for relative_path, content in context.skills:
+            write(f".github/{relative_path}", content)
+
+        write(
+            ".github/copilot-instructions.md",
+            _render_instructions(context.global_instructions, context.personas),
+        )
+        for persona in context.personas:
+            name = str(persona["name"])
+            model = context.models.get(str(persona["model_tier"]), "")
+            write(
+                f".github/agents/{name}.agent.md",
+                _render_github_agent(persona, context.global_instructions, model),
+            )
+
+        for hook_path, event in (
+            ("hooks/pre-tool-use.json", "PreToolUse"),
+            ("hooks/post-tool-use.json", "PostToolUse"),
+        ):
+            hook = context.read_json(hook_path)
+            hook_event = str(hook.pop("event", event))
+            write(
+                f".github/hooks/{hook_path.rsplit('/', 1)[-1]}",
+                json.dumps({"hooks": {hook_event: [hook]}}, indent=2) + "\n",
+            )
+
+        package = str(context.mcp["package"])
+        token_env = str(context.mcp["token_env"])
+        server_token_env = str(context.mcp.get("server_token_env", token_env))
+        write(
+            ".vscode/mcp.json",
+            json.dumps(
+                {
+                    "servers": {
+                        str(context.mcp["name"]): {
+                            "command": "npx",
+                            "args": ["-y", package],
+                            "env": {server_token_env: f"${{env:{token_env}}}"},
+                        }
+                    }
+                },
+                indent=2,
+            )
+            + "\n",
+        )
+
+
+class OpenCodeAssetProvider:
+    """Compile canonical assets for OpenCode."""
+
+    name = "opencode"
+
+    def write_assets(self, context: AssetContext, write: AssetWriter) -> None:
+        for relative_path, content in context.skills:
+            write(f".opencode/{relative_path}", content)
+
+        for persona in context.personas:
+            name = str(persona["name"])
+            model = context.models.get(str(persona["model_tier"]), "")
+            write(
+                f".opencode/agents/{name}.md",
+                _render_opencode_agent(persona, context.global_instructions, model),
+            )
+
+        write(".opencode/plugins/factory-hooks.js", context.opencode_plugin)
+        write(
+            "opencode.json",
+            json.dumps(
+                {
+                    "$schema": "https://opencode.ai/config.json",
+                    "mcp": {str(context.mcp["name"]): self._mcp_config(context)},
+                    "agent": {
+                        str(persona["name"]): {
+                            "description": str(persona["description"]),
+                            "model": context.models.get(str(persona["model_tier"]), ""),
+                            "prompt": str(persona["prompt"]),
+                            "permission": {
+                                "read": "allow",
+                                "edit": "allow",
+                                "bash": "allow",
+                            },
+                        }
+                        for persona in context.personas
+                    },
+                },
+                indent=2,
+            )
+            + "\n",
+        )
+
+    @staticmethod
+    def _mcp_config(context: AssetContext) -> dict[str, Any]:
+        package = str(context.mcp["package"])
+        token_env = str(context.mcp["token_env"])
+        server_token_env = str(context.mcp.get("server_token_env", token_env))
+        opencode_mcp = context.mcp.get("opencode")
+        if not isinstance(opencode_mcp, dict):
+            return {
+                "type": "local",
+                "command": ["npx", "-y", package],
+                "environment": {server_token_env: f"{{env:{token_env}}}"},
+            }
+
+        config = dict(opencode_mcp)
+        config["headers"] = {"Authorization": f"Bearer {{env:{token_env}}}"}
+        return config
+
+
+def _render_instructions(
+    global_instructions: str, personas: Sequence[Mapping[str, Any]]
+) -> str:
+    sections = [global_instructions.rstrip(), "", "## Agent Personas", ""]
+    for persona in personas:
+        sections.extend(
+            [
+                f"### {persona['display_name']}",
+                str(persona["prompt"]),
+                "",
+            ]
+        )
+    return "\n".join(sections)
+
+
+def _render_github_agent(
+    persona: Mapping[str, Any], global_instructions: str, model: str
+) -> str:
+    tools = ", ".join(str(tool) for tool in persona["tools"])
+    return (
+        "---\n"
+        f"name: {persona['name']}\n"
+        f"description: {persona['description']}\n"
+        f"tools: {tools}\n"
+        f"model: {model}\n"
+        "---\n\n"
+        f"{global_instructions.rstrip()}\n\n"
+        f"## Persona\n{persona['prompt']}\n"
+    )
+
+
+def _render_opencode_agent(
+    persona: Mapping[str, Any], global_instructions: str, model: str
+) -> str:
+    tool_permissions = {"read": "read", "write": "edit", "execute": "bash"}
+    permissions = "\n".join(
+        f"  {tool_permissions[str(tool)]}: allow" for tool in persona["tools"]
+    )
+    return (
+        "---\n"
+        f"name: {persona['name']}\n"
+        f"description: {persona['description']}\n"
+        f"model: {model}\n"
+        "permission:\n"
+        f"{permissions}\n"
+        "---\n\n"
+        f"{global_instructions.rstrip()}\n\n"
+        f"## Persona\n{persona['prompt']}\n"
+    )
+
+
 class AssetSynchronizer:
-    """Compile canonical shared assets for Copilot and OpenCode."""
+    """Load canonical assets and delegate compilation to providers."""
 
     _default_models = {
         "reasoning": "reasoning",
@@ -33,9 +227,22 @@ class AssetSynchronizer:
         "fast_triage": "fast_triage",
     }
 
-    def __init__(self, resource_dir: Traversable | None = None) -> None:
+    def __init__(
+        self,
+        resource_dir: Traversable | None = None,
+        *,
+        providers: Sequence[AssetProvider] | None = None,
+    ) -> None:
         self._resource_dir = resource_dir or files("factory").joinpath(
             "resources", "agent_assets"
+        )
+        self._providers = (
+            tuple(providers)
+            if providers is not None
+            else (
+                GitHubAssetProvider(),
+                OpenCodeAssetProvider(),
+            )
         )
 
     def synchronize(
@@ -88,105 +295,24 @@ class AssetSynchronizer:
                 path.chmod(path.stat().st_mode | 0o111)
             written.append(path)
 
-        skills = self._skill_files(str(manifest["skills_directory"]))
-        for relative_path, content in skills:
-            write(f".github/{relative_path}", content)
-            write(f".opencode/{relative_path}", content)
-
-        write(
-            ".github/copilot-instructions.md",
-            self._instructions(global_instructions, personas),
+        mcp = self._load_json(str(manifest["mcp_template"]))
+        context = AssetContext(
+            skills=tuple(self._skill_files(str(manifest["skills_directory"]))),
+            global_instructions=global_instructions,
+            personas=tuple(personas),
+            models=resolved_models,
+            mcp=mcp,
+            read_json=self._load_json,
+            opencode_plugin=self._read_text(str(manifest["opencode_plugin"])),
         )
-        write("AGENTS.md", self._instructions(global_instructions, personas))
+        for provider in self._providers:
+            provider.write_assets(context, write)
 
-        for persona in personas:
-            name = str(persona["name"])
-            model = resolved_models.get(str(persona["model_tier"]), "")
-            write(
-                f".github/agents/{name}.agent.md",
-                self._agent_markdown(persona, global_instructions, model),
-            )
-            write(
-                f".opencode/agents/{name}.md",
-                self._opencode_agent_markdown(persona, global_instructions, model),
-            )
-
-        for hook_path, event in (
-            ("hooks/pre-tool-use.json", "PreToolUse"),
-            ("hooks/post-tool-use.json", "PostToolUse"),
-        ):
-            hook = self._load_json(hook_path)
-            hook_event = str(hook.pop("event", event))
-            write(
-                f".github/hooks/{hook_path.rsplit('/', 1)[-1]}",
-                json.dumps({"hooks": {hook_event: [hook]}}, indent=2) + "\n",
-            )
-
-        write(
-            ".opencode/plugins/factory-hooks.js",
-            self._read_text(str(manifest["opencode_plugin"])),
-        )
+        write("AGENTS.md", _render_instructions(global_instructions, personas))
         write(
             ".githooks/pre-commit",
             self._read_text("hooks/pre-commit"),
             executable=True,
-        )
-
-        mcp = self._load_json(str(manifest["mcp_template"]))
-        package = str(mcp["package"])
-        token_env = str(mcp["token_env"])
-        server_token_env = str(mcp.get("server_token_env", token_env))
-        opencode_mcp = mcp.get("opencode")
-        if not isinstance(opencode_mcp, dict):
-            opencode_mcp = {
-                "type": "local",
-                "command": ["npx", "-y", package],
-                "environment": {server_token_env: f"{{env:{token_env}}}"},
-            }
-        else:
-            opencode_mcp = dict(opencode_mcp)
-            opencode_mcp["headers"] = {"Authorization": f"Bearer {{env:{token_env}}}"}
-        write(
-            ".vscode/mcp.json",
-            json.dumps(
-                {
-                    "servers": {
-                        str(mcp["name"]): {
-                            "command": "npx",
-                            "args": ["-y", package],
-                            "env": {server_token_env: f"${{env:{token_env}}}"},
-                        }
-                    }
-                },
-                indent=2,
-            )
-            + "\n",
-        )
-        write(
-            "opencode.json",
-            json.dumps(
-                {
-                    "$schema": "https://opencode.ai/config.json",
-                    "mcp": {str(mcp["name"]): opencode_mcp},
-                    "agent": {
-                        str(persona["name"]): {
-                            "description": str(persona["description"]),
-                            "model": resolved_models.get(
-                                str(persona["model_tier"]), ""
-                            ),
-                            "prompt": str(persona["prompt"]),
-                            "permission": {
-                                "read": "allow",
-                                "edit": "allow",
-                                "bash": "allow",
-                            },
-                        }
-                        for persona in personas
-                    },
-                },
-                indent=2,
-            )
-            + "\n",
         )
 
         return AssetSyncResult(project_dir=project_path, written_files=tuple(written))
@@ -251,55 +377,6 @@ class AssetSynchronizer:
         if not isinstance(models.get("tiers"), dict):
             raise AssetSyncError(f"Model tiers are missing: {relative_path}")
         return models
-
-    @staticmethod
-    def _instructions(global_instructions: str, personas: list[dict[str, Any]]) -> str:
-        sections = [global_instructions.rstrip(), "", "## Agent Personas", ""]
-        for persona in personas:
-            sections.extend(
-                [
-                    f"### {persona['display_name']}",
-                    str(persona["prompt"]),
-                    "",
-                ]
-            )
-        return "\n".join(sections)
-
-    @staticmethod
-    def _agent_markdown(
-        persona: dict[str, Any], global_instructions: str, model: str
-    ) -> str:
-        tools = ", ".join(str(tool) for tool in persona["tools"])
-        return (
-            "---\n"
-            f"name: {persona['name']}\n"
-            f"description: {persona['description']}\n"
-            f"tools: {tools}\n"
-            f"model: {model}\n"
-            "---\n\n"
-            f"{global_instructions.rstrip()}\n\n"
-            f"## Persona\n{persona['prompt']}\n"
-        )
-
-    @staticmethod
-    def _opencode_agent_markdown(
-        persona: dict[str, Any], global_instructions: str, model: str
-    ) -> str:
-        tool_permissions = {"read": "read", "write": "edit", "execute": "bash"}
-        permissions = "\n".join(
-            f"  {tool_permissions[str(tool)]}: allow" for tool in persona["tools"]
-        )
-        return (
-            "---\n"
-            f"name: {persona['name']}\n"
-            f"description: {persona['description']}\n"
-            f"model: {model}\n"
-            "permission:\n"
-            f"{permissions}\n"
-            "---\n\n"
-            f"{global_instructions.rstrip()}\n\n"
-            f"## Persona\n{persona['prompt']}\n"
-        )
 
     @staticmethod
     def _project_model_mapping(project_dir: Path) -> dict[str, str]:
