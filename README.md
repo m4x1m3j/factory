@@ -23,6 +23,36 @@ The factory template can be modified, and the modifications will need to be made
 
 Our base tech stack will be Python, github.
 
+## Execution Sandboxes
+
+Agent commands can be run in an ephemeral Docker container without mounting the
+current checkout:
+
+```console
+factory sandbox run issue-7 -- python -m pytest
+```
+
+The manager creates a self-contained temporary Git clone, mounts only that clone
+at `/workspace`, disables networking, drops Linux capabilities, applies CPU,
+memory, and process limits, and removes the clone after execution. Changes are
+committed only inside the temporary clone and returned as a diff; no branch is
+created in the caller's repository. This makes the command suitable for
+verification and experimentation without accumulating local branches. Use
+`--json` for structured output and `--repository PATH` to target a repository
+other than the current directory.
+
+When the repository contains `pyproject.toml`, Factory prepares a temporary
+Python image with `uv` and installs the project's declared dependencies and dev
+dependencies. The mounted clone is the image's `/workspace` source tree, while
+the environment is kept outside the mounted workspace at
+`/opt/factory-venv`, so installation does not add files to the Git diff. Image
+builds may require network access even when the command container itself uses
+`--network none`. Runtime commands set `UV_NO_SYNC=1`, so they use the
+environment prepared during the image build and do not attempt network
+dependency resolution in the network-isolated container. The runtime `uv` cache
+is placed at `/tmp/uv-cache`, which is writable by the non-root sandbox user and
+discarded with the container.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code quality standards (Ruff, mypy, pre-commit), and testing guidelines.
