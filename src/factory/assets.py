@@ -108,7 +108,7 @@ class AssetSynchronizer:
             )
             write(
                 f".opencode/agents/{name}.md",
-                self._agent_markdown(persona, global_instructions, model),
+                self._opencode_agent_markdown(persona, global_instructions, model),
             )
 
         for hook_path, event in (
@@ -135,6 +135,17 @@ class AssetSynchronizer:
         mcp = self._load_json(str(manifest["mcp_template"]))
         package = str(mcp["package"])
         token_env = str(mcp["token_env"])
+        server_token_env = str(mcp.get("server_token_env", token_env))
+        opencode_mcp = mcp.get("opencode")
+        if not isinstance(opencode_mcp, dict):
+            opencode_mcp = {
+                "type": "local",
+                "command": ["npx", "-y", package],
+                "environment": {server_token_env: f"{{env:{token_env}}}"},
+            }
+        else:
+            opencode_mcp = dict(opencode_mcp)
+            opencode_mcp["headers"] = {"Authorization": f"Bearer {{env:{token_env}}}"}
         write(
             ".vscode/mcp.json",
             json.dumps(
@@ -143,9 +154,7 @@ class AssetSynchronizer:
                         str(mcp["name"]): {
                             "command": "npx",
                             "args": ["-y", package],
-                            "env": {
-                                "GITHUB_PERSONAL_ACCESS_TOKEN": f"${{env:{token_env}}}"
-                            },
+                            "env": {server_token_env: f"${{env:{token_env}}}"},
                         }
                     }
                 },
@@ -158,13 +167,7 @@ class AssetSynchronizer:
             json.dumps(
                 {
                     "$schema": "https://opencode.ai/config.json",
-                    "mcp": {
-                        str(mcp["name"]): {
-                            "type": "local",
-                            "command": ["npx", "-y", package],
-                            "environment": {token_env: f"${{env:{token_env}}}"},
-                        }
-                    },
+                    "mcp": {str(mcp["name"]): opencode_mcp},
                     "agent": {
                         str(persona["name"]): {
                             "description": str(persona["description"]),
@@ -273,6 +276,26 @@ class AssetSynchronizer:
             f"description: {persona['description']}\n"
             f"tools: {tools}\n"
             f"model: {model}\n"
+            "---\n\n"
+            f"{global_instructions.rstrip()}\n\n"
+            f"## Persona\n{persona['prompt']}\n"
+        )
+
+    @staticmethod
+    def _opencode_agent_markdown(
+        persona: dict[str, Any], global_instructions: str, model: str
+    ) -> str:
+        tool_permissions = {"read": "read", "write": "edit", "execute": "bash"}
+        permissions = "\n".join(
+            f"  {tool_permissions[str(tool)]}: allow" for tool in persona["tools"]
+        )
+        return (
+            "---\n"
+            f"name: {persona['name']}\n"
+            f"description: {persona['description']}\n"
+            f"model: {model}\n"
+            "permission:\n"
+            f"{permissions}\n"
             "---\n\n"
             f"{global_instructions.rstrip()}\n\n"
             f"## Persona\n{persona['prompt']}\n"

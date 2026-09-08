@@ -35,8 +35,9 @@ factory project sync-assets --directory PATH
 ```
 
 Copilot files are written under `.github/`, OpenCode files under `.opencode/`,
-and GitHub MCP configuration under `.vscode/mcp.json`. The GitHub token is read
-from `GITHUB_TOKEN`; no token is written into generated files.
+GitHub MCP configuration under `.vscode/mcp.json` and `opencode.json`. The
+GitHub token is read from `GITHUB_TOKEN`; no token is written into generated
+files.
 
 ## Execution Sandboxes
 
