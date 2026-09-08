@@ -11,5 +11,6 @@
   ],
   "skills_directory": "skills",
   "hooks_directory": "hooks",
+  "opencode_plugin": "hooks/opencode-plugin.js",
   "mcp_template": "mcp/github.json"
 }
