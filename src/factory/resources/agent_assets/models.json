@@ -2,15 +2,15 @@
   "tiers": {
     "reasoning": {
       "description": "Deep analysis, architecture, and security evaluation.",
-      "default": "reasoning"
+      "default": "github-copilot/gemini-3.8-flash"
     },
     "code_generation": {
       "description": "Feature implementation, refactoring, and test authoring.",
-      "default": "code_generation"
+      "default": "github-copilot/gpt-5.6-luna"
     },
     "fast_triage": {
       "description": "Fast classification, routing, and status inspection.",
-      "default": "fast_triage"
+      "default": "github-copilot/gpt-5.6-luna"
     }
   }
 }

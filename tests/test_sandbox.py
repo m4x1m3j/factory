@@ -63,7 +63,7 @@ class AssetValidationRuntime(FakeRuntime):
         assert (worktree / ".github/copilot-instructions.md").is_file()
         assert (worktree / ".github/agents/development.agent.md").is_file()
         assert (worktree / ".github/hooks/pre-tool-use.json").is_file()
-        assert (worktree / ".opencode/skills/caveman/SKILL.md").is_file()
+        assert (worktree / ".opencode/skills/grill-with-docs/SKILL.md").is_file()
         assert (worktree / ".opencode/agents/security.md").is_file()
 
         mcp = json.loads((worktree / ".vscode/mcp.json").read_text(encoding="utf-8"))
