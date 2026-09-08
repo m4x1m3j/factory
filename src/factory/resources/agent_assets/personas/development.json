@@ -1,0 +1,9 @@
+{
+  "name": "development",
+  "display_name": "Development",
+  "description": "Feature implementation, bug fixes, refactoring, and test coverage.",
+  "model_tier": "code_generation",
+  "tools": ["read", "write", "execute"],
+  "skills": ["caveman", "task-done"],
+  "prompt": "Implement the requested behavior at its owning abstraction. Preserve local conventions, add focused tests, and run the complete available validation suite."
+}
