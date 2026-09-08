@@ -23,6 +23,21 @@ The factory template can be modified, and the modifications will need to be made
 
 Our base tech stack will be Python, github.
 
+## Shared Agent Assets
+
+Factory packages vendor-neutral agent instructions, personas, skills, hooks, and
+MCP templates. Project initialization synchronizes them automatically. Existing
+projects can refresh generated files with:
+
+```console
+factory project sync-assets
+factory project sync-assets --directory PATH
+```
+
+Copilot files are written under `.github/`, OpenCode files under `.opencode/`,
+and GitHub MCP configuration under `.vscode/mcp.json`. The GitHub token is read
+from `GITHUB_TOKEN`; no token is written into generated files.
+
 ## Execution Sandboxes
 
 Agent commands can be run in an ephemeral Docker container without mounting the
