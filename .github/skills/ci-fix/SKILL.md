@@ -102,6 +102,7 @@ Check whether `PIVOT_PATH` exists.
 - **Subsequent runs** (file exists): append a new cycle header block:
   ```python
   from ci_fix import pivot
+
   pivot.append_cycle(PIVOT_PATH, {"PIPELINE_ID": PIPELINE_ID, "STATUS": "in-progress"})
   ```
 
@@ -137,11 +138,15 @@ Classify the failure as one of:
 For each job, call:
 ```python
 from ci_fix import pivot
-pivot.append_cycle(PIVOT_PATH, {
-    "JOB": "<job-name>",
-    "CLASSIFICATION": "<obvious|non-obvious>",
-    "FAILURE_SUMMARY": "<one-line summary of the root cause>",
-})
+
+pivot.append_cycle(
+    PIVOT_PATH,
+    {
+        "JOB": "<job-name>",
+        "CLASSIFICATION": "<obvious|non-obvious>",
+        "FAILURE_SUMMARY": "<one-line summary of the root cause>",
+    },
+)
 ```
 
 **Step 3.4 — Check if all failures are non-obvious.**
@@ -151,10 +156,13 @@ Count the number of jobs classified as `obvious` vs `non-obvious`.
 If **all** failed jobs are `non-obvious`:
 1. Write a blocked status block with a human-readable reason:
    ```python
-   pivot.append_cycle(PIVOT_PATH, {
-       "STATUS": "blocked",
-       "REASON": "All failures are non-obvious — manual inspection required",
-   })
+   pivot.append_cycle(
+       PIVOT_PATH,
+       {
+           "STATUS": "blocked",
+           "REASON": "All failures are non-obvious — manual inspection required",
+       },
+   )
    ```
 2. Print the following message and stop:
    ```
@@ -226,6 +234,7 @@ Capture the full stdout+stderr output.
 Parse the pipeline ID using:
 ```python
 from ci_fix.gitlab_client import parse_pipeline_id
+
 pipeline_id = parse_pipeline_id(push_output)
 ```
 
@@ -237,10 +246,13 @@ Take the pipeline with the highest `id` from the returned list as the new `pipel
 
 Append to the pivot document:
 ```python
-pivot.append_cycle(PIVOT_PATH, {
-    "PIPELINE_ID": str(pipeline_id),
-    "STATUS": "in-progress",
-})
+pivot.append_cycle(
+    PIVOT_PATH,
+    {
+        "PIPELINE_ID": str(pipeline_id),
+        "STATUS": "in-progress",
+    },
+)
 ```
 
 Print:
@@ -254,10 +266,13 @@ Do **not** run `git push`. Leave all commits in place (they remain in `git log`)
 
 Append to the pivot document:
 ```python
-pivot.append_cycle(PIVOT_PATH, {
-    "STATUS": "blocked",
-    "REASON": "push declined by user",
-})
+pivot.append_cycle(
+    PIVOT_PATH,
+    {
+        "STATUS": "blocked",
+        "REASON": "push declined by user",
+    },
+)
 ```
 
 Print:
