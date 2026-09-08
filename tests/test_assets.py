@@ -55,7 +55,7 @@ def test_should_compile_copilot_and_opencode_assets(tmp_path: Path) -> None:
     }
 
     opencode = json.loads((tmp_path / "opencode.json").read_text(encoding="utf-8"))
-    assert opencode["agent"]["review"]["model"] == "reasoning"
+    assert opencode["agent"]["review"]["model"] == "github-copilot/gemini-3.8-flash"
     assert opencode["mcp"]["github"] == {
         "type": "remote",
         "url": "https://api.githubcopilot.com/mcp/",
