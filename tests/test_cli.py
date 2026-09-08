@@ -72,3 +72,42 @@ def test_should_initialize_project_in_requested_directory(
     assert result.exit_code == 0
     assert (destination / "directory-demo").is_dir()
     assert not (working_dir / "directory-demo").exists()
+
+
+def test_should_synchronize_assets_in_current_directory(
+    tmp_path: Path, monkeypatch
+) -> None:
+    # Given a target project directory
+    monkeypatch.chdir(tmp_path)
+
+    # When the asset sync command is invoked
+    result = runner.invoke(app, ["project", "sync-assets"], catch_exceptions=False)
+
+    # Then both harness configurations are generated
+    assert result.exit_code == 0
+    assert "Synchronized" in result.stdout
+    assert (tmp_path / ".github/copilot-instructions.md").is_file()
+    assert (tmp_path / ".opencode/agents/security.md").is_file()
+
+
+def test_should_synchronize_assets_in_requested_directory(
+    tmp_path: Path, monkeypatch
+) -> None:
+    # Given a working directory different from the target project
+    working_dir = tmp_path / "working"
+    project_dir = tmp_path / "project"
+    working_dir.mkdir()
+    project_dir.mkdir()
+    monkeypatch.chdir(working_dir)
+
+    # When the asset sync command receives a directory option
+    result = runner.invoke(
+        app,
+        ["project", "sync-assets", "--directory", str(project_dir)],
+        catch_exceptions=False,
+    )
+
+    # Then assets are written to the requested target
+    assert result.exit_code == 0
+    assert (project_dir / ".vscode/mcp.json").is_file()
+    assert not (working_dir / ".vscode").exists()

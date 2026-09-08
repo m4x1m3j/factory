@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "global_instructions": "instructions/global.md",
+  "model_tiers": "models.json",
+  "personas": [
+    "personas/development.json",
+    "personas/review.json",
+    "personas/security.json",
+    "personas/architecture.json",
+    "personas/product-management.json"
+  ],
+  "skills_directory": "skills",
+  "hooks_directory": "hooks",
+  "opencode_plugin": "hooks/opencode-plugin.js",
+  "mcp_template": "mcp/github.json"
+}

@@ -12,7 +12,7 @@ Factory uses [`uv`](https://docs.astral.sh/uv/) for fast Python package and envi
 
 - Python 3.11 or newer
 - [`uv`](https://docs.astral.sh/uv/getting-started/installation/) installed
-- [`just`](https://github.com/casey/just) command runner (optional but recommended: `uv tool install rust-just`)
+- [`just`](https://github.com/casey/just) command runner (`uv tool install rust-just`)
 - Git
 
 ### Installation
@@ -24,7 +24,7 @@ Factory uses [`uv`](https://docs.astral.sh/uv/) for fast Python package and envi
    cd factory
    ```
 
-2. (Optional) Install `just` CLI runner:
+2. Install `just` CLI runner:
 
    ```bash
    uv tool install rust-just
@@ -34,9 +34,6 @@ Factory uses [`uv`](https://docs.astral.sh/uv/) for fast Python package and envi
 
    ```bash
    just install
-   # or manually:
-   uv sync --dev
-   uv run pre-commit install
    ```
 
 ---
@@ -71,7 +68,7 @@ We maintain code quality using **Ruff** (linting and formatting) and **mypy** (s
 Pre-commit hooks automatically verify and format your changes on every `git commit`. To run all hooks against the entire repository manually:
 
 ```bash
-uv run pre-commit run --all-files
+just precommit
 ```
 
 The pre-commit configuration includes:
@@ -81,40 +78,28 @@ The pre-commit configuration includes:
 - Ruff formatter (`ruff format`)
 - Mypy type checker (`mypy`)
 
-### Linting & Formatting with Ruff
+### Centralized Quality Checks
 
-- **Check lint issues:**
+- **Run all quality checks:**
 
   ```bash
-  uv run ruff check .
+  just check
   ```
 
-- **Auto-fix lint issues:**
+- **Format and fix lint issues:**
 
   ```bash
-  uv run ruff check --fix .
-  ```
-
-- **Check code formatting:**
-
-  ```bash
-  uv run ruff format --check .
-  ```
-
-- **Auto-format code:**
-
-  ```bash
-  uv run ruff format .
+  just fix
   ```
 
 ### Static Type Checking with Mypy
 
 All core codebase definitions in `src/factory` require type annotations. Note that archetype template resources (`src/factory/resources`) are excluded from type checking because they contain templating placeholders.
 
-Run type checks:
+Run type checks through the centralized recipe:
 
 ```bash
-uv run mypy src tests
+just typecheck
 ```
 
 ---
@@ -126,13 +111,13 @@ Factory uses `pytest` and `pytest-cov` for testing.
 - **Run all unit tests:**
 
   ```bash
-  uv run pytest
+  just test
   ```
 
 - **Run tests with coverage:**
 
   ```bash
-  uv run pytest --cov=src/factory
+  just test-cov
   ```
 
 ---
@@ -141,8 +126,8 @@ Factory uses `pytest` and `pytest-cov` for testing.
 
 Every push to `main` and all pull requests trigger our GitHub Actions CI pipeline (`.github/workflows/ci.yml`), which executes two parallel jobs:
 
-1. **Code Quality:** Verifies linting (`ruff check`), formatting (`ruff format --check`), and static typing (`mypy`).
-2. **Tests:** Executes the complete test suite with coverage (`pytest --cov=src/factory`).
+1. **Code Quality:** Runs `just check` for linting, formatting, and static typing.
+2. **Tests:** Runs `just test-cov` for the complete test suite with coverage.
 
 All CI checks must pass before pull requests can be merged.
 
@@ -161,9 +146,6 @@ All CI checks must pass before pull requests can be merged.
 
    ```bash
    just all
-   # or manually:
-   uv run pre-commit run --all-files
-   uv run pytest --cov=src/factory
    ```
 
 4. Commit your changes and push your branch to GitHub.

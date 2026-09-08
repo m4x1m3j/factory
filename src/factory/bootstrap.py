@@ -9,6 +9,8 @@ from importlib.resources import files
 from importlib.resources.abc import Traversable
 from pathlib import Path
 
+from factory.assets import AssetSyncError, AssetSynchronizer, AssetSyncResult
+
 
 class BootstrapError(ValueError):
     """Raised when a target project cannot be initialized."""
@@ -48,8 +50,13 @@ ARCHETYPES: dict[str, Archetype] = {
 class ProjectBootstrapper:
     """Create target project files from a registered archetype."""
 
-    def __init__(self, archetypes: dict[str, Archetype] | None = None) -> None:
+    def __init__(
+        self,
+        archetypes: dict[str, Archetype] | None = None,
+        asset_synchronizer: AssetSynchronizer | None = None,
+    ) -> None:
         self._archetypes = archetypes if archetypes is not None else ARCHETYPES
+        self._asset_synchronizer = asset_synchronizer or AssetSynchronizer()
 
     def initialize(
         self,
@@ -109,7 +116,19 @@ class ProjectBootstrapper:
             file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.write_text(self._render(content, context), encoding="utf-8")
 
+        self.sync_assets(project_dir)
+
         return project_dir
+
+    def sync_assets(
+        self, project_dir: Path | str, *, force: bool = True
+    ) -> AssetSyncResult:
+        """Synchronize shared agent assets into an existing target project."""
+
+        try:
+            return self._asset_synchronizer.synchronize(project_dir, force=force)
+        except AssetSyncError as error:
+            raise BootstrapError(str(error)) from error
 
     def list_archetypes(self) -> tuple[Archetype, ...]:
         """Return registered archetypes in stable name order."""
