@@ -122,6 +122,8 @@ class ProjectBootstrapper:
     ) -> list[tuple[str, str]]:
         files_to_copy: list[tuple[str, str]] = []
         for resource in resource_dir.iterdir():
+            if resource.name == "__pycache__" or resource.name.endswith(".pyc"):
+                continue
             resource_path = relative_path / resource.name
             if resource.is_dir():
                 files_to_copy.extend(
