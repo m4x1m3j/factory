@@ -3,7 +3,16 @@ from pathlib import Path
 
 import pytest
 
-from factory.assets import AssetSyncError, AssetSynchronizer
+from factory.assets import AssetContext, AssetSyncError, AssetSynchronizer, AssetWriter
+
+
+class MarkerAssetProvider:
+    """Test provider used to verify provider orchestration is extensible."""
+
+    name = "marker"
+
+    def write_assets(self, context: AssetContext, write: AssetWriter) -> None:
+        write("marker.txt", f"{len(context.personas)} personas\n")
 
 
 def test_should_compile_copilot_and_opencode_assets(tmp_path: Path) -> None:
@@ -67,6 +76,17 @@ def test_should_read_model_mapping_from_project_config(tmp_path: Path) -> None:
 
     review = (tmp_path / ".opencode/agents/review.md").read_text(encoding="utf-8")
     assert "model: anthropic/claude" in review
+
+
+def test_should_allow_custom_asset_provider_without_changing_synchronizer(
+    tmp_path: Path,
+) -> None:
+    AssetSynchronizer(providers=(MarkerAssetProvider(),)).synchronize(tmp_path)
+
+    assert (tmp_path / "marker.txt").read_text(encoding="utf-8") == "5 personas\n"
+    assert (tmp_path / "AGENTS.md").is_file()
+    assert not (tmp_path / ".github").exists()
+    assert not (tmp_path / ".opencode").exists()
 
 
 def test_should_reject_existing_generated_file_without_force(tmp_path: Path) -> None:
