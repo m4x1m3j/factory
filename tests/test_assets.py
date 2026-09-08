@@ -16,6 +16,7 @@ def test_should_compile_copilot_and_opencode_assets(tmp_path: Path) -> None:
     assert (tmp_path / ".github/copilot-instructions.md").is_file()
     assert (tmp_path / ".github/agents/development.agent.md").is_file()
     assert (tmp_path / ".github/skills/caveman/SKILL.md").is_file()
+    assert (tmp_path / ".github/skills/ci-fix/SKILL.md").is_file()
     assert (tmp_path / ".opencode/agents/security.md").is_file()
     assert (tmp_path / ".opencode/skills/task-done/SKILL.md").is_file()
     assert (tmp_path / ".githooks/pre-commit").stat().st_mode & 0o111
