@@ -26,6 +26,7 @@ def test_should_compile_copilot_and_opencode_assets(tmp_path: Path) -> None:
     assert '"tool.execute.before"' in plugin
     assert '"tool.execute.after"' in plugin
     assert "rtk ${command}" in plugin
+    assert "just fix" in plugin
 
     copilot = (tmp_path / ".github/agents/development.agent.md").read_text(
         encoding="utf-8"

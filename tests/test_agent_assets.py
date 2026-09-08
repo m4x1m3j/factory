@@ -43,5 +43,9 @@ def test_should_define_portable_hook_and_mcp_templates() -> None:
 
     assert pre_tool["event"] == "PreToolUse"
     assert post_tool["event"] == "PostToolUse"
+    assert post_tool["command"] == "just fix"
+    assert "just all" in asset_root.joinpath("hooks", "pre-commit").read_text(
+        encoding="utf-8"
+    )
     assert mcp["token_env"] == "GITHUB_TOKEN"
     assert mcp["package"] == "@modelcontextprotocol/server-github"

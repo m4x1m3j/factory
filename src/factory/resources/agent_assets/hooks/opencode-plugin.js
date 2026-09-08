@@ -15,7 +15,7 @@ export const FactoryHooks = async ({ $ }) => {
         return;
       }
 
-      await $`uv run ruff check --fix . && uv run ruff format .`;
+      await $`just fix`;
     },
   };
 };
