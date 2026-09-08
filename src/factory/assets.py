@@ -123,6 +123,10 @@ class AssetSynchronizer:
             )
 
         write(
+            ".opencode/plugins/factory-hooks.js",
+            self._read_text(str(manifest["opencode_plugin"])),
+        )
+        write(
             ".githooks/pre-commit",
             self._read_text("hooks/pre-commit"),
             executable=True,
