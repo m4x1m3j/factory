@@ -48,4 +48,9 @@ def test_should_define_portable_hook_and_mcp_templates() -> None:
         encoding="utf-8"
     )
     assert mcp["token_env"] == "GITHUB_TOKEN"
+    assert mcp["server_token_env"] == "GITHUB_PERSONAL_ACCESS_TOKEN"
     assert mcp["package"] == "@modelcontextprotocol/server-github"
+    assert mcp["opencode"] == {
+        "type": "remote",
+        "url": "https://api.githubcopilot.com/mcp/",
+    }

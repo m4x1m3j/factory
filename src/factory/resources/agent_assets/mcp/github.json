@@ -1,5 +1,10 @@
 {
   "name": "github",
   "package": "@modelcontextprotocol/server-github",
-  "token_env": "GITHUB_TOKEN"
+  "token_env": "GITHUB_TOKEN",
+  "server_token_env": "GITHUB_PERSONAL_ACCESS_TOKEN",
+  "opencode": {
+    "type": "remote",
+    "url": "https://api.githubcopilot.com/mcp/"
+  }
 }

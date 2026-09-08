@@ -28,6 +28,14 @@ def test_should_compile_copilot_and_opencode_assets(tmp_path: Path) -> None:
     assert "rtk ${command}" in plugin
     assert "just fix" in plugin
 
+    opencode_agent = (tmp_path / ".opencode/agents/development.md").read_text(
+        encoding="utf-8"
+    )
+    assert "tools:" not in opencode_agent
+    assert "permission:\n  read: allow\n  edit: allow\n  bash: allow" in (
+        opencode_agent
+    )
+
     copilot = (tmp_path / ".github/agents/development.agent.md").read_text(
         encoding="utf-8"
     )
@@ -35,15 +43,17 @@ def test_should_compile_copilot_and_opencode_assets(tmp_path: Path) -> None:
     assert "Implement the requested behavior" in copilot
 
     mcp = json.loads((tmp_path / ".vscode/mcp.json").read_text(encoding="utf-8"))
-    assert mcp["servers"]["github"]["env"]["GITHUB_PERSONAL_ACCESS_TOKEN"] == (
-        "${env:GITHUB_TOKEN}"
-    )
+    assert mcp["servers"]["github"]["env"] == {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_TOKEN}"
+    }
 
     opencode = json.loads((tmp_path / "opencode.json").read_text(encoding="utf-8"))
     assert opencode["agent"]["review"]["model"] == "reasoning"
-    assert opencode["mcp"]["github"]["environment"]["GITHUB_TOKEN"] == (
-        "${env:GITHUB_TOKEN}"
-    )
+    assert opencode["mcp"]["github"] == {
+        "type": "remote",
+        "url": "https://api.githubcopilot.com/mcp/",
+        "headers": {"Authorization": "Bearer {env:GITHUB_TOKEN}"},
+    }
 
 
 def test_should_read_model_mapping_from_project_config(tmp_path: Path) -> None:
