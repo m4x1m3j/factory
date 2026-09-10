@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import json
 import subprocess
 from collections.abc import Sequence
 from pathlib import Path
 
 import pytest
 
+from factory.bootstrap import ProjectBootstrapper
 from factory.sandbox import (
     ContainerResult,
     DockerRuntime,
@@ -48,6 +50,37 @@ class FakeRuntime:
         pass
 
 
+class AssetValidationRuntime(FakeRuntime):
+    def run(
+        self,
+        *,
+        name: str,
+        worktree: Path,
+        command: Sequence[str],
+        config: SandboxConfig,
+        timeout: float | None,
+    ) -> ContainerResult:
+        assert (worktree / ".github/copilot-instructions.md").is_file()
+        assert (worktree / ".github/agents/development.agent.md").is_file()
+        assert (worktree / ".github/hooks/pre-tool-use.json").is_file()
+        assert (worktree / ".opencode/skills/grill-with-docs/SKILL.md").is_file()
+        assert (worktree / ".opencode/agents/security.md").is_file()
+
+        mcp = json.loads((worktree / ".vscode/mcp.json").read_text(encoding="utf-8"))
+        assert mcp["servers"]["github"]["env"]["GITHUB_PERSONAL_ACCESS_TOKEN"] == (
+            "${env:GITHUB_TOKEN}"
+        )
+        opencode = json.loads((worktree / "opencode.json").read_text(encoding="utf-8"))
+        assert set(opencode["agent"]) == {
+            "development",
+            "review",
+            "security",
+            "architecture",
+            "product-management",
+        }
+        return ContainerResult(0, "validated", "")
+
+
 def test_project_runtime_builds_an_image_with_uv_and_project_sync(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -81,6 +114,34 @@ def test_project_runtime_builds_an_image_with_uv_and_project_sync(
     assert "uv sync --dev --directory /workspace" not in dockerfile
     assert "ENV UV_CACHE_DIR=/tmp/uv-cache" in dockerfile
     assert "chmod -R a+rwX /tmp/uv-cache /opt/factory-venv" in dockerfile
+
+
+def test_reference_project_assets_validate_inside_isolated_sandbox(
+    tmp_path: Path,
+) -> None:
+    project = ProjectBootstrapper().initialize(
+        "reference-project", "python", destination=tmp_path
+    )
+    create_repository(project)
+    subprocess.run(["git", "-C", str(project), "add", "--all"], check=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(project),
+            "commit",
+            "-m",
+            "generated reference project",
+        ],
+        check=True,
+    )
+
+    result = SandboxManager(project, runtime=AssetValidationRuntime()).run(
+        "asset-validation", ["factory", "validate-assets"]
+    )
+
+    assert result.succeeded
+    assert result.stdout == "validated"
 
 
 def create_repository(path: Path) -> None:

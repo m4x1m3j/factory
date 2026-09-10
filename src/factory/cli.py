@@ -55,6 +55,35 @@ def list_archetypes() -> None:
         typer.echo(f"{archetype.name}: {archetype.description}")
 
 
+@project_app.command("sync-assets")
+def sync_project_assets(
+    directory: Path | None = typer.Option(
+        None,
+        "--directory",
+        "-d",
+        help="Target project directory. Defaults to the current directory.",
+    ),
+    force: bool = typer.Option(
+        True,
+        "--force/--no-force",
+        help="Overwrite generated asset files when they already exist.",
+    ),
+) -> None:
+    """Synchronize shared agent assets into a target project."""
+
+    project_dir = directory if directory is not None else Path.cwd()
+    try:
+        result = ProjectBootstrapper().sync_assets(project_dir, force=force)
+    except BootstrapError as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=1) from error
+
+    typer.echo(
+        f"Synchronized {len(result.written_files)} agent asset files in "
+        f"{result.project_dir}"
+    )
+
+
 @sandbox_app.command("run")
 def run_sandbox(
     task_id: str = typer.Argument(help="Task identifier for the disposable run."),
