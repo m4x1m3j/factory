@@ -12,7 +12,8 @@ Factory uses [`uv`](https://docs.astral.sh/uv/) for fast Python package and envi
 
 - Python 3.11 or newer
 - [`uv`](https://docs.astral.sh/uv/getting-started/installation/) installed
-- [`just`](https://github.com/casey/just) command runner (optional but recommended: `uv tool install rust-just`)
+- [`just`](https://github.com/casey/just) command runner
+- [`rtk`](https://github.com/rtk-ai/rtk) command-output proxy
 - Git
 
 ### Installation
@@ -24,13 +25,17 @@ Factory uses [`uv`](https://docs.astral.sh/uv/) for fast Python package and envi
    cd factory
    ```
 
-2. (Optional) Install `just` CLI runner:
+2. Bootstrap the Linux development environment:
 
    ```bash
-   uv tool install rust-just
+   ./preinstall.sh
    ```
 
-3. Install dependencies and set up pre-commit hooks:
+   The script installs `uv`, `just`, and `rtk`, syncs development dependencies,
+   and configures pre-commit hooks. It requires `curl`.
+
+3. Or install project dependencies and pre-commit hooks after `uv` and `just`
+   are already available:
 
    ```bash
    just install
