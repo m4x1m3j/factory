@@ -9,3 +9,14 @@ htmlcov/
 dist/
 *.egg-info/
 .factory/worktrees/
+
+# Generated shared agent assets
+.github/copilot-instructions.md
+.github/agents/
+.github/hooks/
+.github/skills/
+.vscode/mcp.json
+.opencode/
+opencode.json
+AGENTS.md
+.githooks/

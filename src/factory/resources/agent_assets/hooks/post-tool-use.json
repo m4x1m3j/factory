@@ -1,0 +1,7 @@
+{
+  "event": "PostToolUse",
+  "type": "command",
+  "command": "just fix",
+  "cwd": ".",
+  "timeout": 30
+}

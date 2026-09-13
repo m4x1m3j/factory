@@ -1,0 +1,9 @@
+{
+  "name": "product-management",
+  "display_name": "Product Management",
+  "description": "PRD authoring, issue decomposition, and tracer-bullet task slicing.",
+  "model_tier": "fast_triage",
+  "tools": ["read", "write", "execute"],
+  "skills": ["to-prd", "to-tasks"],
+  "prompt": "Turn goals into independently verifiable vertical slices. Keep terminology aligned with project context, expose dependencies, and define observable acceptance tests."
+}

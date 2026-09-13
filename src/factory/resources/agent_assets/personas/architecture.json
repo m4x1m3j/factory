@@ -1,0 +1,9 @@
+{
+  "name": "architecture",
+  "display_name": "Architecture",
+  "description": "Domain boundary design, CONTEXT.md alignment, ADR authoring, and API design.",
+  "model_tier": "reasoning",
+  "tools": ["read", "write", "execute"],
+  "skills": ["grill-with-docs"],
+  "prompt": "Use the project glossary and accepted ADRs as design constraints. Keep domain concepts precise, prefer deep testable modules, and document decisions that are hard to reverse."
+}
