@@ -39,35 +39,28 @@ GitHub MCP configuration under `.vscode/mcp.json` and `opencode.json`. The
 GitHub token is read from `GITHUB_TOKEN`; no token is written into generated
 files.
 
-## Execution Sandboxes
 
-Agent commands can be run in an ephemeral Docker container without mounting the
-current checkout:
+## Copilot Agent Sandboxes
+
+Run GitHub Copilot inside isolated microVM sandboxes via Docker Sandboxes (`sbx`) using an in-container Git clone:
 
 ```console
-factory sandbox run issue-7 -- python -m pytest
+# 1. Build and load the custom Copilot template
+./build-copilot-template.sh
+
+# 2. Setup the sandbox in clone mode with custom .github mounted and GitHub token configured
+./setup-copilot-sandbox.sh
+
+# 3. Run interactive Copilot session or execute non-interactive prompts
+./run-copilot-sandbox.sh
+./run-copilot-sandbox.sh -p "Check git status and summarize recent commits"
 ```
 
-The manager creates a self-contained temporary Git clone, mounts only that clone
-at `/workspace`, disables networking, drops Linux capabilities, applies CPU,
-memory, and process limits, and removes the clone after execution. Changes are
-committed only inside the temporary clone and returned as a diff; no branch is
-created in the caller's repository. This makes the command suitable for
-verification and experimentation without accumulating local branches. Use
-`--json` for structured output and `--repository PATH` to target a repository
-other than the current directory.
+### Key Components
 
-When the repository contains `pyproject.toml`, Factory prepares a temporary
-Python image with `uv` and installs the project's declared dependencies and dev
-dependencies. The mounted clone is the image's `/workspace` source tree, while
-the environment is kept outside the mounted workspace at
-`/opt/factory-venv`, so installation does not add files to the Git diff. Image
-builds may require network access even when the command container itself uses
-`--network none`. Runtime commands set `UV_NO_SYNC=1`, so they use the
-environment prepared during the image build and do not attempt network
-dependency resolution in the network-isolated container. The runtime `uv` cache
-is placed at `/tmp/uv-cache`, which is writable by the non-root sandbox user and
-discarded with the container.
+- [build-copilot-template.sh](build-copilot-template.sh): Extends `docker/sandbox-templates:copilot-docker` using [docker/copilot/Dockerfile](docker/copilot/Dockerfile) with `just`, `rtk`, and GitHub SSH host keys pre-configured, then loads the image into `sbx template`.
+- [setup-copilot-sandbox.sh](setup-copilot-sandbox.sh): Creates an isolated clone-mode sandbox (`--clone`), mounts the custom `.github` folder into the sandbox, synchronizes GitHub credentials into `sbx secret`, and configures sandbox network policy to allow SSH Git pushes (`github.com:22`).
+- [run-copilot-sandbox.sh](run-copilot-sandbox.sh): Starts interactive or non-interactive Copilot sessions, command execution (`-e`), and OAuth device-code login (`--login`).
 
 ## Contributing
 

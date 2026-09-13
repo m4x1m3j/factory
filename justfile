@@ -2,10 +2,11 @@
 default:
     @just --list
 
-# Install dependencies and pre-commit hooks
+# Install dependencies, pre-commit hooks, AI assets
 install:
     uv sync --dev
     uv run pre-commit install
+    uv run factory project sync-assets
 
 # Run tests
 test *args:
