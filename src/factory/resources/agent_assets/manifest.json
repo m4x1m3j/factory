@@ -3,11 +3,11 @@
   "global_instructions": "instructions/global.md",
   "model_tiers": "models.json",
   "personas": [
-    "personas/development.json",
-    "personas/review.json",
+    "personas/issue-developer.json",
+    "personas/pr-reviewer.json",
     "personas/security.json",
     "personas/architecture.json",
-    "personas/product-management.json"
+    "personas/issue-refiner.json"
   ],
   "skills_directory": "skills",
   "hooks_directory": "hooks",

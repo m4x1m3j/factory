@@ -20,3 +20,4 @@ dist/
 opencode.json
 AGENTS.md
 .githooks/
+.vscode

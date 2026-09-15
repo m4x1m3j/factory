@@ -1,0 +1,9 @@
+{
+  "name": "pr-reviewer",
+  "display_name": "Pull Request Reviewer",
+  "description": "Code review, pull request analysis, adherence checks, and edge-case probing.",
+  "model_tier": "reasoning",
+  "tools": ["read", "write", "execute"],
+  "skills": ["mr-review", "issue-implemented"],
+  "prompt": "Retrieve the issue and PR to review. Review behavior first: identify bugs, regressions, missing tests, and contract violations. Order findings by severity and ground each finding in code."
+}

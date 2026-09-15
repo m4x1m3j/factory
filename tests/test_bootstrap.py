@@ -29,8 +29,8 @@ def test_should_scaffold_python_project_when_archetype_is_supported(
     assert "uv run pytest --cov=src/forecast_service" in justfile
     assert "{{ package_name }}" not in justfile
     assert (project_dir / ".github/copilot-instructions.md").is_file()
-    assert (project_dir / ".github/agents/development.agent.md").is_file()
-    assert (project_dir / ".opencode/agents/review.md").is_file()
+    assert (project_dir / ".github/agents/issue-developer.agent.md").is_file()
+    assert (project_dir / ".opencode/agents/pr-reviewer.md").is_file()
     assert (project_dir / "opencode.json").is_file()
 
 
