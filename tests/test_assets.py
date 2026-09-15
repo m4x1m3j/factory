@@ -16,16 +16,17 @@ class MarkerAssetProvider:
 
 
 def test_should_compile_copilot_and_opencode_assets(tmp_path: Path) -> None:
+    model = "provider/mode_for_code_generation"
     result = AssetSynchronizer().synchronize(
         tmp_path,
-        model_mapping={"code_generation": "openai/gpt-5"},
+        model_mapping={"code_generation": model},
     )
 
     assert result.project_dir == tmp_path.resolve()
     assert (tmp_path / ".github/copilot-instructions.md").is_file()
-    assert (tmp_path / ".github/agents/development.agent.md").is_file()
+    assert (tmp_path / ".github/agents/issue-developer.agent.md").is_file()
     assert (tmp_path / ".opencode/agents/security.md").is_file()
-    assert (tmp_path / ".opencode/skills/task-done/SKILL.md").is_file()
+    assert (tmp_path / ".opencode/skills/issue-implemented/SKILL.md").is_file()
     assert (tmp_path / ".githooks/pre-commit").stat().st_mode & 0o111
     opencode_plugin = tmp_path / ".opencode/plugins/factory-hooks.js"
     assert opencode_plugin.is_file()
@@ -35,7 +36,7 @@ def test_should_compile_copilot_and_opencode_assets(tmp_path: Path) -> None:
     assert "rtk ${command}" in plugin
     assert "just fix" in plugin
 
-    opencode_agent = (tmp_path / ".opencode/agents/development.md").read_text(
+    opencode_agent = (tmp_path / ".opencode/agents/issue-developer.md").read_text(
         encoding="utf-8"
     )
     assert "tools:" not in opencode_agent
@@ -43,10 +44,10 @@ def test_should_compile_copilot_and_opencode_assets(tmp_path: Path) -> None:
         opencode_agent
     )
 
-    copilot = (tmp_path / ".github/agents/development.agent.md").read_text(
+    copilot = (tmp_path / ".github/agents/issue-developer.agent.md").read_text(
         encoding="utf-8"
     )
-    assert "model: openai/gpt-5" in copilot
+    assert f"model: {model}" in copilot
     assert "Implement the requested behavior" in copilot
 
     mcp = json.loads((tmp_path / ".vscode/mcp.json").read_text(encoding="utf-8"))
@@ -55,7 +56,7 @@ def test_should_compile_copilot_and_opencode_assets(tmp_path: Path) -> None:
     }
 
     opencode = json.loads((tmp_path / "opencode.json").read_text(encoding="utf-8"))
-    assert opencode["agent"]["review"]["model"] == "github-copilot/gemini-3.8-flash"
+    assert opencode["agent"]["issue-developer"]["model"] == model
     assert opencode["mcp"]["github"] == {
         "type": "remote",
         "url": "https://api.githubcopilot.com/mcp/",
@@ -72,7 +73,7 @@ def test_should_read_model_mapping_from_project_config(tmp_path: Path) -> None:
 
     AssetSynchronizer().sync(tmp_path)
 
-    review = (tmp_path / ".opencode/agents/review.md").read_text(encoding="utf-8")
+    review = (tmp_path / ".opencode/agents/pr-reviewer.md").read_text(encoding="utf-8")
     assert "model: anthropic/claude" in review
 
 

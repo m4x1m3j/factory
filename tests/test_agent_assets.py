@@ -19,11 +19,11 @@ def test_should_package_complete_shared_agent_asset_manifest() -> None:
         for path in manifest["personas"]
     ]
     assert {persona["name"] for persona in personas} == {
-        "development",
-        "review",
+        "issue-developer",
+        "pr-reviewer",
         "security",
         "architecture",
-        "product-management",
+        "issue-refiner",
     }
     assert all(persona["tools"] == ["read", "write", "execute"] for persona in personas)
 
