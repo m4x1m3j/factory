@@ -111,13 +111,13 @@ fi
 
 if [ -n "$TOKEN" ]; then
     echo "✓ Configuring GitHub/Copilot token in sbx secrets..."
-    sbx secret set github --token "$TOKEN" -f >/dev/null 2>&1 || true
-    sbx secret set copilot --token "$TOKEN" -f >/dev/null 2>&1 || true
+    sbx secret set github --token "$TOKEN" -f >/dev/null 2>&1
+    sbx secret set copilot --token "$TOKEN" -f >/dev/null 2>&1
     echo "✓ Stored token into sbx secrets"
 elif command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
     echo "✓ Using host GitHub CLI ('gh') authentication for sbx secrets..."
-    sbx secret set github --command 'gh auth token' >/dev/null 2>&1 || true
-    sbx secret set copilot --command 'gh auth token' >/dev/null 2>&1 || true
+    sbx secret set github --command 'gh auth token' >/dev/null 2>&1
+    sbx secret set copilot --command 'gh auth token' >/dev/null 2>&1
 elif sbx secret ls 2>/dev/null | grep -qE "github|copilot"; then
     echo "✓ Found existing stored GitHub/Copilot secrets in sbx"
 else
